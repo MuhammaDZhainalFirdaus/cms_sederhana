@@ -17,6 +17,15 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
     header('Location: login.php');
     exit();
 }
+
+// Check user role
+$userRole = $_SESSION['user_role'] ?? null;
+if (isset($_SESSION['user_id']) && !$userRole) {
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $userRole = $stmt->fetchColumn();
+    $_SESSION['user_role'] = $userRole;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,6 +42,74 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <style>
     /* ...existing styles... */
+    body.dark-mode {
+        background: #181c24 !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .main-header,
+    body.dark-mode .main-footer,
+    body.dark-mode .card,
+    body.dark-mode .content-wrapper {
+        background: #23272f !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .sidebar-dark-primary {
+        background: #fff !important;
+        color: #222 !important;
+    }
+    body.dark-mode .sidebar-dark-primary .nav-link,
+    body.dark-mode .sidebar-dark-primary .brand-link,
+    body.dark-mode .sidebar-dark-primary .nav-icon {
+        color: #222 !important;
+    }
+    body.dark-mode .sidebar-dark-primary .nav-link.active {
+        background: #e9ecef !important;
+        color: #007bff !important;
+    }
+    body.dark-mode .small-box {
+        background: #23272f !important;
+        color: #e0e0e0 !important;
+        border: 1px solid #23272f;
+    }
+    body.dark-mode .small-box .icon {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    }
+    body.dark-mode .small-box .inner h3,
+    body.dark-mode .small-box .inner p {
+        color: #fff !important;
+    }
+    body.dark-mode .table,
+    body.dark-mode .table-bordered {
+        background: #23272f !important;
+        color: #e0e0e0 !important;
+    }
+    body.dark-mode .form-control {
+        background: #23272f !important;
+        color: #e0e0e0 !important;
+        border-color: #444;
+    }
+    body.dark-mode .form-control:focus {
+        background: #23272f !important;
+        color: #fff !important;
+        border-color: #2575fc;
+    }
+    body.dark-mode .btn,
+    body.dark-mode .btn-primary,
+    body.dark-mode .btn-danger,
+    body.dark-mode .btn-secondary {
+        color: #fff !important;
+    }
+    body.dark-mode .bg-info { background: #176d8a !important; }
+    body.dark-mode .bg-success { background: #1e7e34 !important; }
+    body.dark-mode .bg-warning { background: #b38600 !important; }
+    body.dark-mode .bg-danger { background: #a71d2a !important; }
+    body.dark-mode .bg-primary { background: #0d3d91 !important; }
+    body.dark-mode .bg-secondary { background: #343a40 !important; }
+    body.dark-mode .card-header { background: #23272f !important; color: #fff !important; }
+    body.dark-mode .fc .fc-toolbar-title { color: #fff !important; }
+    body.dark-mode .fc .fc-button { background: #23272f !important; color: #fff !important; border: 1px solid #444; }
+    body.dark-mode .fc .fc-button-primary { background: #2575fc !important; border: none; }
+    body.dark-mode .fc .fc-daygrid-day-number { color: #fff !important; }
     .dashboard-btn {
         background: none;
         color: inherit;
@@ -93,6 +170,43 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
             opacity: 0;
         }
     }
+    .small-box .icon {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(31,38,135,0.08);
+    }
+    .small-box.bg-info .icon { background: #17a2b8; }
+    .small-box.bg-success .icon { background: #28a745; }
+    .small-box.bg-warning .icon { background: #ffc107; }
+    .small-box.bg-danger .icon { background: #dc3545; }
+    .small-box.bg-primary .icon { background: #007bff; }
+    .small-box.bg-secondary .icon { background: #6c757d; }
+    .small-box .icon i {
+        font-size: 28px !important;
+        color: #fff;
+        opacity: 1;
+        margin: 0;
+    }
+    .small-box .inner h3,
+    .small-box .inner p {
+        font-weight: bold;
+    }
+    .main-header {
+        position: sticky;
+        top: 0;
+        z-index: 1050;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+    .content-wrapper {
+        padding-top: 56px;
+    }
     </style>
 </head>
 <body class="hold-transition sidebar-mini">
@@ -108,6 +222,9 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
 
         <!-- Right navbar links -->
         <ul class="navbar-nav ml-auto">
+            <li class="nav-item">
+                <button id="toggle-darkmode" class="btn btn-outline-secondary btn-sm mr-2" title="Toggle Dark/Light Mode"><i class="fas fa-moon"></i></button>
+            </li>
             <li class="nav-item">
                 <a class="nav-link" href="logout.php">
                     <i class="fas fa-sign-out-alt"></i> Logout
@@ -140,12 +257,14 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                             <p>Articles</p>
                         </a>
                     </li>
+                    <?php if ($userRole === 'admin'): ?>
                     <li class="nav-item">
                         <a href="users.php" class="nav-link sidebar-anim ripple-btn">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Users</p>
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </div>
@@ -296,6 +415,29 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                         </div>
                     </div>
                 </div>
+                <!-- Kalender Aktivitas -->
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- Statistik, artikel terbaru, dsb -->
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header bg-success text-white">
+                                <h3 class="card-title mb-0"><i class="fas fa-calendar-alt mr-2"></i>Kalender Aktivitas</h3>
+                            </div>
+                            <div class="card-body p-2">
+                                <div id="activity-calendar" style="max-width:300px;margin:auto;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <?php if ($userRole === 'admin'): ?>
+                <div class="row mb-3">
+                    <div class="col-lg-12">
+                        <button id="reset-visitors-btn" class="btn btn-danger"><i class="fas fa-redo"></i> Reset Pengunjung</button>
+                    </div>
+                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -313,6 +455,9 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<!-- FullCalendar CSS & JS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
 <script>
 // Ripple effect for button and sidebar
 $(document).on('click', '.ripple-btn', function(e) {
@@ -338,6 +483,62 @@ $(document).on('mousedown touchstart', '.ripple-btn', function() {
 });
 $(document).on('mouseup mouseleave touchend', '.ripple-btn', function() {
     $(this).removeClass('floating');
+});
+$(document).ready(function() {
+  // Ambil data artikel per tanggal
+  $.ajax({
+    url: 'get_article_events.php',
+    dataType: 'json',
+    success: function(events) {
+      var calendarEl = document.getElementById('activity-calendar');
+      var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: 400,
+        events: events,
+        eventColor: '#2575fc',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: ''
+        },
+        eventDisplay: 'list-item',
+        dayMaxEventRows: 2,
+        locale: 'id'
+      });
+      calendar.render();
+    }
+  });
+});
+$('#reset-visitors-btn').on('click', function() {
+  if (confirm('Apakah Anda yakin ingin mereset data pengunjung?')) {
+    $.post('reset_visitors.php', function(res) {
+      if (res.trim() === 'OK') {
+        alert('Data pengunjung berhasil direset!');
+        location.reload();
+      } else {
+        alert('Gagal mereset data pengunjung!');
+      }
+    });
+  }
+});
+// Dark mode toggle
+function setDarkMode(on) {
+    if (on) {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkmode', '1');
+        $("#toggle-darkmode i").removeClass('fa-moon').addClass('fa-sun');
+    } else {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkmode', '0');
+        $("#toggle-darkmode i").removeClass('fa-sun').addClass('fa-moon');
+    }
+}
+$(function() {
+    // Set mode on load
+    setDarkMode(localStorage.getItem('darkmode') === '1');
+    $('#toggle-darkmode').on('click', function() {
+        setDarkMode(!document.body.classList.contains('dark-mode'));
+    });
 });
 </script>
 </body>

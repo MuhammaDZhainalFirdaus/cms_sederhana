@@ -8,6 +8,20 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Check user role
+$userRole = $_SESSION['user_role'] ?? null;
+if (!$userRole) {
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $userRole = $stmt->fetchColumn();
+    $_SESSION['user_role'] = $userRole;
+}
+
+if ($userRole !== 'admin' && $userRole !== 'editor' && $userRole !== 'viewer') {
+    header('Location: index.php');
+    exit();
+}
+
 // Handle article deletion
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
@@ -17,9 +31,16 @@ if (isset($_GET['delete'])) {
     exit();
 }
 
-// Get all articles
-$stmt = $pdo->query("SELECT * FROM articles ORDER BY created_at DESC");
-$articles = $stmt->fetchAll();
+// Get all articles or search
+$search = isset($_GET['search']) ? trim($_GET['search']) : '';
+if ($search !== '') {
+    $stmt = $pdo->prepare("SELECT * FROM articles WHERE title LIKE ? ORDER BY created_at DESC");
+    $stmt->execute(['%' . $search . '%']);
+    $articles = $stmt->fetchAll();
+} else {
+    $stmt = $pdo->query("SELECT * FROM articles ORDER BY created_at DESC");
+    $articles = $stmt->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -80,12 +101,14 @@ $articles = $stmt->fetchAll();
                             <p>Articles</p>
                         </a>
                     </li>
+                    <?php if ($userRole === 'admin'): ?>
                     <li class="nav-item">
                         <a href="users.php" class="nav-link">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Users</p>
                         </a>
                     </li>
+                    <?php endif; ?>
                 </ul>
             </nav>
         </div>
@@ -101,7 +124,7 @@ $articles = $stmt->fetchAll();
                         <h1 class="m-0">Articles</h1>
                     </div>
                     <div class="col-sm-6">
-                        <a href="article_edit.php" class="btn btn-primary float-right">
+                        <a href="article_edit.php" class="btn btn-primary float-right" style="<?php echo ($userRole === 'viewer') ? 'display:none;' : ''; ?>">
                             <i class="fas fa-plus"></i> New Article
                         </a>
                     </div>
@@ -114,6 +137,17 @@ $articles = $stmt->fetchAll();
             <div class="container-fluid">
                 <div class="card">
                     <div class="card-body">
+                        <form class="form-inline mb-3" method="get" action="articles.php">
+                            <div class="input-group mr-2">
+                                <input type="text" class="form-control" name="search" placeholder="Cari judul artikel..." value="<?php echo htmlspecialchars($search); ?>">
+                                <div class="input-group-append">
+                                    <button class="btn btn-primary" type="submit"><i class="fas fa-search"></i> Cari</button>
+                                </div>
+                            </div>
+                            <?php if ($search !== ''): ?>
+                                <a href="articles.php" class="btn btn-secondary ml-2">Reset</a>
+                            <?php endif; ?>
+                        </form>
                         <table class="table table-bordered">
                             <thead>
                                 <tr>
@@ -128,12 +162,14 @@ $articles = $stmt->fetchAll();
                                     <td><?php echo htmlspecialchars($article['title']); ?></td>
                                     <td><?php echo date('Y-m-d H:i', strtotime($article['created_at'])); ?></td>
                                     <td>
-                                        <a href="article_edit.php?id=<?php echo $article['id']; ?>" class="btn btn-sm btn-info">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </a>
-                                        <a href="articles.php?delete=<?php echo $article['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
-                                            <i class="fas fa-trash"></i> Delete
-                                        </a>
+                                        <?php if ($userRole !== 'viewer'): ?>
+                                            <a href="article_edit.php?id=<?php echo $article['id']; ?>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <a href="articles.php?delete=<?php echo $article['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure?')">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </a>
+                                        <?php endif; ?>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>

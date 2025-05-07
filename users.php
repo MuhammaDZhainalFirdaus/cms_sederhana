@@ -8,6 +8,19 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Check user role
+$userRole = $_SESSION['user_role'] ?? null;
+if (!$userRole) {
+    $stmt = $pdo->prepare("SELECT role FROM users WHERE id = ?");
+    $stmt->execute([$_SESSION['user_id']]);
+    $userRole = $stmt->fetchColumn();
+    $_SESSION['user_role'] = $userRole;
+}
+if ($userRole !== 'admin') {
+    header('Location: index.php');
+    exit();
+}
+
 // Handle user deletion
 if (isset($_GET['delete'])) {
     $id = $_GET['delete'];
@@ -118,6 +131,7 @@ $users = $stmt->fetchAll();
                             <thead>
                                 <tr>
                                     <th>Username</th>
+                                    <th>Role</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -125,6 +139,15 @@ $users = $stmt->fetchAll();
                                 <?php foreach ($users as $user): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($user['username']); ?></td>
+                                    <td>
+                                        <?php if ($user['role'] === 'admin'): ?>
+                                            <span class="badge badge-danger">Admin</span>
+                                        <?php elseif ($user['role'] === 'editor'): ?>
+                                            <span class="badge badge-info">Editor</span>
+                                        <?php elseif ($user['role'] === 'viewer'): ?>
+                                            <span class="badge badge-secondary">Viewer</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td>
                                         <a href="user_edit.php?id=<?php echo $user['id']; ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-edit"></i> Edit

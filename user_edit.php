@@ -11,7 +11,8 @@ if (!isset($_SESSION['user_id'])) {
 $user = [
     'id' => '',
     'username' => '',
-    'password' => ''
+    'password' => '',
+    'role' => 'editor'
 ];
 
 // If editing existing user
@@ -25,20 +26,21 @@ if (isset($_GET['id'])) {
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $username = $_POST['username'];
     $password = $_POST['password'];
+    $role = $_POST['role'] ?? 'editor';
     
     if (isset($_POST['id']) && !empty($_POST['id'])) {
         // Update existing user
         if (!empty($password)) {
-            $stmt = $pdo->prepare("UPDATE users SET username = ?, password = ? WHERE id = ?");
-            $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT), $_POST['id']]);
+            $stmt = $pdo->prepare("UPDATE users SET username = ?, password = ?, role = ? WHERE id = ?");
+            $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT), $role, $_POST['id']]);
         } else {
-            $stmt = $pdo->prepare("UPDATE users SET username = ? WHERE id = ?");
-            $stmt->execute([$username, $_POST['id']]);
+            $stmt = $pdo->prepare("UPDATE users SET username = ?, role = ? WHERE id = ?");
+            $stmt->execute([$username, $role, $_POST['id']]);
         }
     } else {
         // Create new user
-        $stmt = $pdo->prepare("INSERT INTO users (username, password) VALUES (?, ?)");
-        $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT)]);
+        $stmt = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, ?)");
+        $stmt->execute([$username, password_hash($password, PASSWORD_DEFAULT), $role]);
     }
     
     header('Location: users.php');
@@ -144,6 +146,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="form-group">
                                 <label for="password">Password<?php echo $user['id'] ? ' (leave blank to keep current)' : ''; ?></label>
                                 <input type="password" class="form-control" id="password" name="password" <?php echo $user['id'] ? '' : 'required'; ?>>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="role">Role</label>
+                                <select class="form-control" id="role" name="role" required <?php echo ($user['username'] === 'admin') ? 'disabled' : ''; ?>>
+                                    <option value="admin" <?php echo ($user['role'] === 'admin') ? 'selected' : ''; ?>>Admin</option>
+                                    <option value="editor" <?php echo ($user['role'] === 'editor') ? 'selected' : ''; ?>>Editor</option>
+                                    <option value="viewer" <?php echo ($user['role'] === 'viewer') ? 'selected' : ''; ?>>Viewer</option>
+                                </select>
+                                <?php if ($user['username'] === 'admin'): ?>
+                                    <input type="hidden" name="role" value="admin">
+                                <?php endif; ?>
                             </div>
                             
                             <button type="submit" class="btn btn-primary">Save User</button>
