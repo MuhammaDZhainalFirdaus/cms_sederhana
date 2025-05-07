@@ -2,6 +2,16 @@
 session_start();
 require_once 'config/database.php';
 
+// Log visitor
+$today = date('Y-m-d');
+$stmt = $pdo->prepare("SELECT * FROM visitors WHERE visit_date = ?");
+$stmt->execute([$today]);
+if ($row = $stmt->fetch()) {
+    $pdo->prepare("UPDATE visitors SET visit_count = visit_count + 1 WHERE visit_date = ?")->execute([$today]);
+} else {
+    $pdo->prepare("INSERT INTO visitors (visit_date, visit_count) VALUES (?, 1)")->execute([$today]);
+}
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php') {
     header('Location: login.php');
@@ -86,6 +96,7 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                 <div class="row mb-2">
                     <div class="col-sm-6">
                         <h1 class="m-0">Dashboard</h1>
+                        <p class="text-muted" style="font-size:1.2rem;">Zhainal Firdaus</p>
                     </div>
                 </div>
             </div>
@@ -109,6 +120,116 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                                 <i class="fas fa-newspaper"></i>
                             </div>
                             <a href="articles.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-success">
+                            <div class="inner">
+                                <?php
+                                $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE username = 'admin'");
+                                $adminCount = $stmt->fetchColumn();
+                                ?>
+                                <h3><?php echo $adminCount; ?></h3>
+                                <p>Total Admin</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-user-shield"></i>
+                            </div>
+                            <a href="users.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-warning">
+                            <div class="inner">
+                                <?php
+                                $stmt = $pdo->query("SELECT COUNT(*) FROM users WHERE username != 'admin'");
+                                $userCount = $stmt->fetchColumn();
+                                ?>
+                                <h3><?php echo $userCount; ?></h3>
+                                <p>Total User</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <a href="users.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-danger">
+                            <div class="inner">
+                                <?php
+                                $stmt = $pdo->query("SELECT COUNT(*) FROM articles WHERE DATE(created_at) = CURDATE()");
+                                $todayArticleCount = $stmt->fetchColumn();
+                                ?>
+                                <h3><?php echo $todayArticleCount; ?></h3>
+                                <p>Artikel Hari Ini</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-calendar-day"></i>
+                            </div>
+                            <a href="articles.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-primary">
+                            <div class="inner">
+                                <?php
+                                $stmt = $pdo->query("SELECT SUM(visit_count) FROM visitors");
+                                $totalVisitors = $stmt->fetchColumn();
+                                ?>
+                                <h3><?php echo $totalVisitors ? $totalVisitors : 0; ?></h3>
+                                <p>Total Pengunjung</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-6">
+                        <div class="small-box bg-secondary">
+                            <div class="inner">
+                                <?php
+                                $stmt = $pdo->prepare("SELECT visit_count FROM visitors WHERE visit_date = ?");
+                                $stmt->execute([$today]);
+                                $todayVisitors = $stmt->fetchColumn();
+                                ?>
+                                <h3><?php echo $todayVisitors ? $todayVisitors : 0; ?></h3>
+                                <p>Pengunjung Hari Ini</p>
+                            </div>
+                            <div class="icon">
+                                <i class="fas fa-user-friends"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Tabel Artikel Terbaru -->
+                <div class="row">
+                    <div class="col-lg-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title mb-0"><i class="fas fa-clock mr-2"></i>5 Artikel Terbaru</h3>
+                            </div>
+                            <div class="card-body p-0">
+                                <table class="table table-striped mb-0">
+                                    <thead>
+                                        <tr>
+                                            <th>Judul</th>
+                                            <th>Tanggal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php
+                                        $stmt = $pdo->query("SELECT title, created_at FROM articles ORDER BY created_at DESC LIMIT 5");
+                                        while ($row = $stmt->fetch()) {
+                                            echo '<tr>';
+                                            echo '<td>' . htmlspecialchars($row['title']) . '</td>';
+                                            echo '<td>' . date('Y-m-d H:i', strtotime($row['created_at'])) . '</td>';
+                                            echo '</tr>';
+                                        }
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
