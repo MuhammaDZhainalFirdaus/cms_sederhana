@@ -31,6 +31,69 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <style>
+    /* ...existing styles... */
+    .dashboard-btn {
+        background: none;
+        color: inherit;
+        border: none;
+        outline: none;
+        cursor: pointer;
+        transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.18s;
+        will-change: transform;
+        position: relative;
+        overflow: hidden;
+    }
+    .dashboard-btn:hover, .dashboard-btn:focus {
+        transform: translateY(-6px) scale(1.04);
+        z-index: 2;
+    }
+    .dashboard-btn.floating {
+        transform: translateY(-2px) scale(0.98);
+    }
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        background-color: rgba(39, 117, 252, 0.4);
+        pointer-events: none;
+    }
+    @keyframes ripple {
+        to {
+            transform: scale(2.5);
+            opacity: 0;
+        }
+    }
+    .sidebar-anim {
+        position: relative;
+        overflow: hidden;
+        transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.18s;
+        will-change: transform;
+        z-index: 1;
+    }
+    .sidebar-anim:hover, .sidebar-anim:focus {
+        transform: translateY(-4px) scale(1.04);
+        background: rgba(39,117,252,0.08) !important;
+    }
+    .sidebar-anim.floating {
+        transform: translateY(-1px) scale(0.98);
+    }
+    .ripple {
+        position: absolute;
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        background-color: rgba(39, 117, 252, 0.18);
+        pointer-events: none;
+    }
+    @keyframes ripple {
+        to {
+            transform: scale(2.5);
+            opacity: 0;
+        }
+    }
+    </style>
 </head>
 <body class="hold-transition sidebar-mini">
 <div class="wrapper">
@@ -66,19 +129,19 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
             <nav class="mt-2">
                 <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu">
                     <li class="nav-item">
-                        <a href="index.php" class="nav-link">
+                        <a href="index.php" class="nav-link sidebar-anim ripple-btn">
                             <i class="nav-icon fas fa-tachometer-alt"></i>
                             <p>Dashboard</p>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="articles.php" class="nav-link">
+                        <a href="articles.php" class="nav-link sidebar-anim ripple-btn">
                             <i class="nav-icon fas fa-newspaper"></i>
                             <p>Articles</p>
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a href="users.php" class="nav-link">
+                        <a href="users.php" class="nav-link sidebar-anim ripple-btn">
                             <i class="nav-icon fas fa-users"></i>
                             <p>Users</p>
                         </a>
@@ -119,7 +182,7 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                             <div class="icon">
                                 <i class="fas fa-newspaper"></i>
                             </div>
-                            <a href="articles.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            <a href="articles.php" class="small-box-footer dashboard-btn ripple-btn">More info <i class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
@@ -135,7 +198,7 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                             <div class="icon">
                                 <i class="fas fa-user-shield"></i>
                             </div>
-                            <a href="users.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            <a href="users.php" class="small-box-footer dashboard-btn ripple-btn">More info <i class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
@@ -151,7 +214,7 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                             <div class="icon">
                                 <i class="fas fa-users"></i>
                             </div>
-                            <a href="users.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            <a href="users.php" class="small-box-footer dashboard-btn ripple-btn">More info <i class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
@@ -167,7 +230,7 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
                             <div class="icon">
                                 <i class="fas fa-calendar-day"></i>
                             </div>
-                            <a href="articles.php" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                            <a href="articles.php" class="small-box-footer dashboard-btn ripple-btn">More info <i class="fas fa-arrow-circle-right"></i></a>
                         </div>
                     </div>
                     <div class="col-lg-3 col-6">
@@ -250,5 +313,32 @@ if (!isset($_SESSION['user_id']) && basename($_SERVER['PHP_SELF']) != 'login.php
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script>
+// Ripple effect for button and sidebar
+$(document).on('click', '.ripple-btn', function(e) {
+    var $btn = $(this);
+    var offset = $btn.offset();
+    var x = e.pageX - offset.left;
+    var y = e.pageY - offset.top;
+    var $ripple = $('<span class="ripple"></span>');
+    $ripple.css({
+        left: x - 20,
+        top: y - 20,
+        width: 40,
+        height: 40
+    });
+    $btn.append($ripple);
+    setTimeout(function() {
+        $ripple.remove();
+    }, 600);
+});
+// Floating effect for button and sidebar
+$(document).on('mousedown touchstart', '.ripple-btn', function() {
+    $(this).addClass('floating');
+});
+$(document).on('mouseup mouseleave touchend', '.ripple-btn', function() {
+    $(this).removeClass('floating');
+});
+</script>
 </body>
 </html> 

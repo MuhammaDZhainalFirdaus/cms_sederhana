@@ -40,8 +40,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
     <style>
-        .login-page {
-            background: #f4f6f9;
+        body.login-page {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            min-height: 100vh;
         }
         .login-box {
             margin-top: 0;
@@ -51,24 +52,61 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-bottom: 2rem;
         }
         .login-logo a {
-            color: #007bff;
+            color: #fff;
             font-size: 2.5rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
         .login-card-body {
-            border-radius: 0.5rem;
-            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+            border-radius: 1.2rem;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            background: rgba(255,255,255,0.95);
         }
         .alert {
             border-radius: 0.25rem;
             margin-bottom: 1rem;
         }
         .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
+            background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            border: none;
+            border-radius: 2rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+            transition: transform 0.18s cubic-bezier(.4,2,.3,1), box-shadow 0.18s;
+            box-shadow: 0 2px 8px rgba(31, 38, 135, 0.15);
+            will-change: transform;
         }
-        .btn-primary:hover {
-            background-color: #0069d9;
-            border-color: #0062cc;
+        .btn-primary:hover, .btn-primary:focus {
+            transform: translateY(-6px) scale(1.04);
+            box-shadow: 0 8px 24px 0 rgba(31, 38, 135, 0.18);
+        }
+        .btn-primary.floating {
+            transform: translateY(-2px) scale(0.98);
+            box-shadow: 0 4px 12px 0 rgba(31, 38, 135, 0.13);
+        }
+        .input-group .form-control:focus {
+            border-color: #2575fc;
+            box-shadow: 0 0 0 2px #6a11cb33;
+        }
+        .input-group-text {
+            background: #f0f4ff;
+            color: #2575fc;
+            font-size: 1.3rem;
+        }
+        .ripple {
+            position: absolute;
+            border-radius: 50%;
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            background-color: rgba(39, 117, 252, 0.4);
+            pointer-events: none;
+        }
+        @keyframes ripple {
+            to {
+                transform: scale(2.5);
+                opacity: 0;
+            }
         }
     </style>
 </head>
@@ -91,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
             <?php endif; ?>
 
-            <form action="login.php" method="post">
+            <form action="login.php" method="post" id="loginForm">
                 <div class="input-group mb-3">
                     <input type="text" class="form-control" placeholder="Username" name="username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
                     <div class="input-group-append">
@@ -100,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         </div>
                     </div>
                 </div>
-                <div class="input-group mb-3">
+                <div class="input-group mb-4">
                     <input type="password" class="form-control" placeholder="Password" name="password" required>
                     <div class="input-group-append">
                         <div class="input-group-text">
@@ -109,8 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-12">
-                        <button type="submit" class="btn btn-primary btn-block">
+                    <div class="col-12 position-relative">
+                        <button type="submit" class="btn btn-primary btn-block ripple-btn" style="position:relative;overflow:hidden;">
                             <i class="fas fa-sign-in-alt mr-2"></i> Login
                         </button>
                     </div>
@@ -126,5 +164,39 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
 <script src="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/js/adminlte.min.js"></script>
+<script>
+// Ripple effect for button
+$(document).on('click', '.ripple-btn', function(e) {
+    var $btn = $(this);
+    var offset = $btn.offset();
+    var x = e.pageX - offset.left;
+    var y = e.pageY - offset.top;
+    var $ripple = $('<span class="ripple"></span>');
+    $ripple.css({
+        left: x - 20,
+        top: y - 20,
+        width: 40,
+        height: 40
+    });
+    $btn.append($ripple);
+    setTimeout(function() {
+        $ripple.remove();
+    }, 600);
+});
+// Floating effect for button
+$(document).on('mousedown touchstart', '.ripple-btn', function() {
+    $(this).addClass('floating');
+});
+$(document).on('mouseup mouseleave touchend', '.ripple-btn', function() {
+    $(this).removeClass('floating');
+});
+// Input focus effect (optional, already styled in CSS)
+$('.form-control').on('focus', function() {
+    $(this).closest('.input-group').find('.input-group-text').css('background', '#e3eaff');
+});
+$('.form-control').on('blur', function() {
+    $(this).closest('.input-group').find('.input-group-text').css('background', '#f0f4ff');
+});
+</script>
 </body>
 </html> 
