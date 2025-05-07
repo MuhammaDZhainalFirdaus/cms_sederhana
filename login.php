@@ -2,21 +2,27 @@
 session_start();
 require_once 'config/database.php';
 
+$error = '';
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $username = $_POST['username'];
+    $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-    $stmt->execute([$username]);
-    $user = $stmt->fetch();
-
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        header('Location: index.php');
-        exit();
+    if (empty($username) || empty($password)) {
+        $error = "Username dan password harus diisi";
     } else {
-        $error = "Invalid username or password";
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            header('Location: index.php');
+            exit();
+        } else {
+            $error = "Username atau password salah";
+        }
     }
 }
 ?>
@@ -33,6 +39,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <!-- Theme style -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/admin-lte@3.2/dist/css/adminlte.min.css">
+    <style>
+        .login-page {
+            background: #f4f6f9;
+        }
+        .login-box {
+            margin-top: 0;
+            padding-top: 7rem;
+        }
+        .login-logo {
+            margin-bottom: 2rem;
+        }
+        .login-logo a {
+            color: #007bff;
+            font-size: 2.5rem;
+        }
+        .login-card-body {
+            border-radius: 0.5rem;
+            box-shadow: 0 0 1px rgba(0,0,0,.125), 0 1px 3px rgba(0,0,0,.2);
+        }
+        .alert {
+            border-radius: 0.25rem;
+            margin-bottom: 1rem;
+        }
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+    </style>
 </head>
 <body class="hold-transition login-page">
 <div class="login-box">
@@ -41,15 +79,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
     <div class="card">
         <div class="card-body login-card-body">
-            <p class="login-box-msg">Sign in to start your session</p>
+            <p class="login-box-msg">Silakan login untuk memulai sesi Anda</p>
 
-            <?php if (isset($error)): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
+            <?php if (!empty($error)): ?>
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-circle mr-2"></i>
+                    <?php echo $error; ?>
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
             <?php endif; ?>
 
             <form action="login.php" method="post">
                 <div class="input-group mb-3">
-                    <input type="text" class="form-control" placeholder="Username" name="username" required>
+                    <input type="text" class="form-control" placeholder="Username" name="username" value="<?php echo isset($_POST['username']) ? htmlspecialchars($_POST['username']) : ''; ?>" required>
                     <div class="input-group-append">
                         <div class="input-group-text">
                             <span class="fas fa-user"></span>
@@ -66,7 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 <div class="row">
                     <div class="col-12">
-                        <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-sign-in-alt mr-2"></i> Login
+                        </button>
                     </div>
                 </div>
             </form>
